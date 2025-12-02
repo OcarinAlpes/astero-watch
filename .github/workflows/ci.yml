@@ -60,7 +60,7 @@ jobs:
           done
       
       - name: 🗄️ Create database manually
-        run: mysql -h 127.0.0.1 -u root -p root -e "CREATE DATABASE IF NOT EXISTS astero_watch_test;"
+        run: mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS astero_watch_test;"
       
       - name: 🗄️ Create database schema
         run: php bin/console doctrine:schema:create --env=test --no-interaction 
