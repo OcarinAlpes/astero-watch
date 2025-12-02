@@ -66,7 +66,7 @@ jobs:
         run: php bin/console doctrine:schema:create --env=test --no-interaction 
       
       - name: 🧪 Run PHPUnit tests
-        run: php bin/phpunit
+        run: vendor/bin/phpunit
 
   # ============================================
   # JOB 2 : Qualité du code
