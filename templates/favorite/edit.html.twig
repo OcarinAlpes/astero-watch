@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le favori{% endblock %}
+
+{% block body %}
+<h1>✏️ Modifier {{ favorite.name }}</h1>
+
+{{ form_start(form, {'attr': {'class': 'card'}}) }}
+    <div class="card-body">
+        {{ form_row(form.notes) }}
+    </div>
+    <div class="card-footer">
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a href="{{ path('favorite_index') }}" class="btn btn-secondary">Annuler</a>
+    </div>
+{{ form_end(form) }}
+{% endblock %}

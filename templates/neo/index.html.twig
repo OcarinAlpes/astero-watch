@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}NEOs - {{ start_date|date('d/m/Y') }}{% endblock %}
+
+{% block body %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>🌍 Astéroïdes proches de la Terre</h1>
+        <p class="text-muted">
+            Du {{ start_date|date('d/m/Y') }} au {{ end_date|date('d/m/Y') }}
+            — <strong>{{ element_count }}</strong> objets détectés
+        </p>
+    </div>
+</div>
+
+{# Formulaire de recherche par date #}
+<form method="get" class="row g-3 mb-4">
+    <div class="col-auto">
+        <label class="form-label">Date début</label>
+        <input type="date" name="start_date" class="form-control" 
+               value="{{ start_date|date('Y-m-d') }}">
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Date fin</label>
+        <input type="date" name="end_date" class="form-control" 
+               value="{{ end_date|date('Y-m-d') }}">
+    </div>
+    <div class="col-auto align-self-end">
+        <button type="submit" class="btn btn-primary">Rechercher</button>
+    </div>
+</form>
+
+{% if neo_data and neo_data.near_earth_objects is defined %}
+    {% for date, neos in neo_data.near_earth_objects %}
+        <h3 class="mt-4">📅 {{ date }}</h3>
+        <div class="row">
+            {% for neo in neos %}
+                <div class="col-md-4 mb-3">
+                    <div class="card neo-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                {{ neo.name }}
+                                {% if neo.is_potentially_hazardous_asteroid %}
+                                    <span class="badge bg-danger">⚠️ Dangereux</span>
+                                {% endif %}
+                            </h5>
+                            <p class="card-text">
+                                <strong>Diamètre estimé:</strong><br>
+                                {{ neo.estimated_diameter.meters.estimated_diameter_min|number_format(0) }} 
+                                - {{ neo.estimated_diameter.meters.estimated_diameter_max|number_format(0) }} m
+                            </p>
+                            {% set approach = neo.close_approach_data[0] %}
+                            {% if approach %}
+                                <p class="card-text">
+                                    <strong>Distance:</strong> 
+                                    {{ approach.miss_distance.kilometers|number_format(0) }} km<br>
+                                    <strong>Vitesse:</strong> 
+                                    {{ approach.relative_velocity.kilometers_per_hour|number_format(0) }} km/h
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{ path('neo_show', {id: neo.id}) }}" class="btn btn-sm btn-outline-primary">
+                                Détails
+                            </a>
+                            <a href="{{ path('favorite_add', {asteroidId: neo.id}) }}" class="btn btn-sm btn-outline-warning">
+                                ⭐ Favori
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="alert alert-info">Aucun astéroïde trouvé pour cette période.</div>
+{% endif %}
+{% endblock %}

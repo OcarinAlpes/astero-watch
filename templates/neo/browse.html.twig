@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Explorer les astéroïdes{% endblock %}
+
+{% block body %}
+<h1>🔭 Explorer tous les astéroïdes</h1>
+
+<p class="text-muted">
+    Page {{ current_page + 1 }} sur {{ page.total_pages|default('?') }}
+    — {{ page.total_elements|default('?') }} astéroïdes au total
+</p>
+
+<div class="row">
+    {% for asteroid in asteroids %}
+        <div class="col-md-4 mb-3">
+            <div class="card neo-card h-100">
+                <div class="card-body">
+                    <h6 class="card-title">{{ asteroid.name }}</h6>
+                    <p class="card-text small">
+                        {% if asteroid.is_potentially_hazardous_asteroid %}
+                            <span class="dangerous">⚠️ Dangereux</span>
+                        {% else %}
+                            <span class="safe">✓ Safe</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ path('neo_show', {id: asteroid.id}) }}" class="btn btn-sm btn-primary">
+                        Voir
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{# Pagination #}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if current_page > 0 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ path('neo_browse', {page: current_page - 1}) }}">
+                    Précédent
+                </a>
+            </li>
+        {% endif %}
+        
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ current_page + 1 }}</span>
+        </li>
+        
+        {% if page.total_pages is defined and current_page < page.total_pages - 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ path('neo_browse', {page: current_page + 1}) }}">
+                    Suivant
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock %}

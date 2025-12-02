@@ -1,0 +1,151 @@
+name: CI - AsteroWatch
+
+# Quand déclencher le workflow
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # ============================================
+  # JOB 1 : Tests
+  # ============================================
+  tests:
+    name: Tests PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    
+    # Matrice : teste sur plusieurs versions PHP
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3']
+    
+    # Services (comme docker-compose)
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: astero_watch_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    
+    steps:
+      # Étape 1 : Récupérer le code
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      # Étape 2 : Installer PHP
+      - name: 🐘 Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql
+          coverage: xdebug
+      
+      # Étape 3 : Cache Composer (accélère les builds)
+      - name: 📦 Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      
+      - name: 📦 Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+      
+      # Étape 4 : Installer les dépendances
+      - name: 📥 Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+      
+      # Étape 5 : Créer le fichier .env.test.local
+      - name: ⚙️ Setup test environment
+        run: |
+          echo "DATABASE_URL=mysql://root:root@127.0.0.1:3306/astero_watch_test?serverVersion=8.0" > .env.test.local
+          echo "NASA_API_KEY=DEMO_KEY" >> .env.test.local
+      
+      # Étape 6 : Préparer la base de données
+      - name: 🗄️ Create database schema
+        run: |
+          php bin/console doctrine:schema:create --env=test --no-interaction
+      
+      # Étape 7 : Lancer les tests
+      - name: 🧪 Run PHPUnit tests
+        run: php bin/phpunit --coverage-clover coverage.xml
+      
+      # Étape 8 : Upload du rapport de couverture (optionnel)
+      - name: 📊 Upload coverage report
+        uses: codecov/codecov-action@v4
+        if: matrix.php == '8.3'
+        with:
+          file: coverage.xml
+          fail_ci_if_error: false
+        continue-on-error: true
+
+  # ============================================
+  # JOB 2 : Qualité du code
+  # ============================================
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl
+      
+      - name: 📥 Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+      
+      # Vérifie la syntaxe PHP
+      - name: 🔍 Check PHP syntax
+        run: find src tests -name "*.php" -exec php -l {} \; | grep -v "No syntax errors"
+        continue-on-error: true
+      
+      # Vérifie les vulnérabilités des dépendances
+      - name: 🔒 Security check
+        run: composer audit
+
+  # ============================================
+  # JOB 3 : Validation Symfony
+  # ============================================
+  symfony-checks:
+    name: Symfony Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl
+      
+      - name: 📥 Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+      
+      # Vérifie que les fichiers YAML sont valides
+      - name: ✅ Validate Symfony configuration
+        run: php bin/console lint:yaml config --parse-tags
+      
+      # Vérifie que les templates Twig sont valides
+      - name: ✅ Validate Twig templates
+        run: php bin/console lint:twig templates
+      
+      # Vérifie que le container compile
+      - name: ✅ Check container
+        run: php bin/console cache:clear --env=prod --no-warmup

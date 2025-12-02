@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes favoris{% endblock %}
+
+{% block body %}
+<h1>⭐ Mes astéroïdes favoris</h1>
+
+<p class="text-muted mb-4">
+    {{ favorites|length }} favori(s) dont 
+    <span class="text-danger">{{ hazardous_count }} dangereux</span>
+</p>
+
+{% if favorites is empty %}
+    <div class="alert alert-info">
+        Aucun favori pour l'instant. 
+        <a href="{{ path('neo_index') }}">Explore les NEOs</a> pour en ajouter !
+    </div>
+{% else %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nom</th>
+                    <th>Dangereux</th>
+                    <th>Ajouté le</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fav in favorites %}
+                    <tr>
+                        <td>
+                            <a href="{{ path('neo_show', {id: fav.asteroidId}) }}">
+                                {{ fav.name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if fav.isHazardous %}
+                                <span class="badge bg-danger">⚠️ Oui</span>
+                            {% else %}
+                                <span class="badge bg-success">Non</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ fav.addedAt|date('d/m/Y H:i') }}</td>
+                        <td>{{ fav.notes|default('-')|u.truncate(50) }}</td>
+                        <td>
+                            <a href="{{ path('favorite_edit', {id: fav.id}) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                Éditer
+                            </a>
+                            <form action="{{ path('favorite_delete', {id: fav.id}) }}" 
+                                  method="post" class="d-inline"
+                                  onsubmit="return confirm('Supprimer ce favori ?')">
+                                <input type="hidden" name="_token" 
+                                       value="{{ csrf_token('delete' ~ fav.id) }}">
+                                <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+{% endblock %}

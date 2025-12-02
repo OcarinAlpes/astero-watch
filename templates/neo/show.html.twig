@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ asteroid.name }} - AsteroWatch{% endblock %}
+
+{% block body %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('neo_index') }}">Accueil</a></li>
+        <li class="breadcrumb-item active">{{ asteroid.name }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-8">
+        <h1>
+            {{ asteroid.name }}
+            {% if asteroid.is_potentially_hazardous_asteroid %}
+                <span class="badge bg-danger">⚠️ Potentiellement dangereux</span>
+            {% else %}
+                <span class="badge bg-success">✓ Non dangereux</span>
+            {% endif %}
+        </h1>
+
+        <table class="table">
+            <tr>
+                <th>ID NASA JPL</th>
+                <td>{{ asteroid.id }}</td>
+            </tr>
+            <tr>
+                <th>Désignation</th>
+                <td>{{ asteroid.designation|default('N/A') }}</td>
+            </tr>
+            <tr>
+                <th>Magnitude absolue</th>
+                <td>{{ asteroid.absolute_magnitude_h }}</td>
+            </tr>
+            <tr>
+                <th>Diamètre estimé</th>
+                <td>
+                    {{ asteroid.estimated_diameter.meters.estimated_diameter_min|number_format(0) }} 
+                    - {{ asteroid.estimated_diameter.meters.estimated_diameter_max|number_format(0) }} mètres
+                </td>
+            </tr>
+        </table>
+
+        <h3 class="mt-4">Approches proches de la Terre</h3>
+        {% if asteroid.close_approach_data %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Distance (km)</th>
+                        <th>Vitesse (km/h)</th>
+                        <th>Corps orbitant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for approach in asteroid.close_approach_data|slice(0, 10) %}
+                        <tr>
+                            <td>{{ approach.close_approach_date_full }}</td>
+                            <td>{{ approach.miss_distance.kilometers|number_format(0) }}</td>
+                            <td>{{ approach.relative_velocity.kilometers_per_hour|number_format(0) }}</td>
+                            <td>{{ approach.orbiting_body }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Actions</div>
+            <div class="card-body">
+                <a href="{{ path('favorite_add', {asteroidId: asteroid.id}) }}" 
+                   class="btn btn-warning w-100 mb-2">
+                    ⭐ Ajouter aux favoris
+                </a>
+                <a href="{{ asteroid.nasa_jpl_url }}" target="_blank" 
+                   class="btn btn-outline-secondary w-100">
+                    🔗 Voir sur NASA JPL
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

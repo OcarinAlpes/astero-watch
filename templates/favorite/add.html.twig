@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ajouter aux favoris{% endblock %}
+
+{% block body %}
+<h1>⭐ Ajouter aux favoris</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">Informations de l'astéroïde</div>
+            <div class="card-body">
+                <p><strong>Nom :</strong> {{ asteroid.name }}</p>
+                <p><strong>ID NASA :</strong> {{ asteroid.id }}</p>
+                <p>
+                    <strong>Dangereux :</strong> 
+                    {% if asteroid.is_potentially_hazardous_asteroid %}
+                        <span class="text-danger">Oui ⚠️</span>
+                    {% else %}
+                        <span class="text-success">Non</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        {{ form_start(form, {'attr': {'class': 'card'}}) }}
+            <div class="card-header">Ajouter une note</div>
+            <div class="card-body">
+                {{ form_row(form.notes) }}
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-success">
+                    ⭐ Ajouter aux favoris
+                </button>
+                <a href="{{ path('neo_show', {id: asteroid.id}) }}" class="btn btn-secondary">
+                    Annuler
+                </a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
