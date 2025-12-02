@@ -50,17 +50,20 @@ jobs:
       
       - name: ⚙️ Setup test environment
         run: |
-          echo "DATABASE_URL=mysql://root:root@127.0.0.1:3306/astero_watch?serverVersion=8.0" > .env.test.local
+          echo "DATABASE_URL=mysql://root:root@127.0.0.1:3306/astero_watch_test?serverVersion=8.0" > .env.test.local
           echo "NASA_API_KEY=DEMO_KEY" >> .env.test.local
       
       - name: 🗄️ Wait for MySQL
         run: |
-          while ! mysqladmin ping -h"127.0.0.1" --silent; do
+          while ! mysqladmin ping -h"127.0.0.1" -uroot -proot --silent; do
             sleep 1
           done
       
+      - name: 🗄️ Create database manually
+        run: mysql -h 127.0.0.1 -u root -p root -e "CREATE DATABASE IF NOT EXISTS astero_watch_test;"
+      
       - name: 🗄️ Create database schema
-        run: php bin/console doctrine:schema:create --env=test --no-interaction
+        run: php bin/console doctrine:schema:create --env=test --no-interaction 
       
       - name: 🧪 Run PHPUnit tests
         run: php bin/phpunit
